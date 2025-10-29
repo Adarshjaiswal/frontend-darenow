@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import api from '../utils/api';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -57,12 +58,23 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (username, password) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const response = await api.post('/auth/login', { email, password });
+      const encodedUsername = encodeURIComponent(username);
+      const encodedPassword = encodeURIComponent(password);
+      const response = await axios.get(`http://3.111.88.208:3000/api/admin/login/username/${encodedUsername}/password/${encodedPassword}`);
+
+      // API returns JSON with token and adminData
+      const token = response.data?.data?.token;
+      const adminData = response.data?.data?.adminData;
+      const user = { 
+        username: adminData?.userName || username, 
+        name: adminData?.userName || username, // Add name field for dashboard display
+        isAdmin: true, 
+        adminData 
+      };
       
-      const { token, user } = response.data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
       
@@ -76,7 +88,7 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: 'LOGIN_FAIL' });
       return {
         success: false,
-        message: error.response?.data?.message || 'Login failed',
+        message: error.response?.data?.message || error.message || 'Login failed',
       };
     }
   };

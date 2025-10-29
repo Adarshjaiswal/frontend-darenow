@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: '',
   });
   const [error, setError] = useState('');
@@ -31,7 +31,7 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
-    const result = await login(formData.email, formData.password);
+    const result = await login(formData.username, formData.password);
     if (!result.success) {
       setError(result.message);
     }
@@ -44,15 +44,7 @@ const Login = () => {
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link
-              to="/register"
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              create a new account
-            </Link>
-          </p>
+         
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
@@ -62,18 +54,18 @@ const Login = () => {
           )}
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
+              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                Username
               </label>
               <input
-                id="email"
-                name="email"
+                id="username"
+                name="username"
                 type="text"
                 autoComplete="username"
                 required
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 placeholder="Enter your Username"
-                value={formData.email}
+                value={formData.username}
                 onChange={handleChange}
               />
             </div>
