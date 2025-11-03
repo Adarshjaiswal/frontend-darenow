@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import RestaurantList from './pages/RestaurantList';
 import CreateRestaurant from './pages/CreateRestaurant';
 import EditRestaurant from './pages/EditRestaurant';
+import UpdatePassword from './pages/UpdatePassword';
 import Contact from './pages/Contact';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
@@ -62,6 +63,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <EditRestaurant />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/update-password"
+                element={
+                  <ProtectedRoute>
+                    <UpdatePassword />
                   </ProtectedRoute>
                 }
               />

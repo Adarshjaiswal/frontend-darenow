@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../utils/api';
 
@@ -6,27 +6,50 @@ const CreateRestaurant = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    location: '',
+    address: '',
     description: '',
-    cuisine: '',
-    priceRange: '$$',
-    phone: '',
-    website: '',
-    status: 'active',
+    email: '',
+    mobileNumber: '',
+    latitude: '',
+    longitude: '',
+    openingTime: '',
+    closingTime: '',
+    forTwo: '',
+    offerPercentage: '',
+    couponPercentage: '',
+    interestId: 0,
+    ratting: 0,
+    placeType: 'RESTAURANT',
   });
-  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [interests, setInterests] = useState([]);
+  const [loadingInterests, setLoadingInterests] = useState(true);
+  const [interestsError, setInterestsError] = useState('');
+
+  useEffect(() => {
+    const fetchInterests = async () => {
+      try {
+        const response = await api.get('/interest');
+        setInterests(response.data || []);
+        setInterestsError('');
+      } catch (error) {
+        console.error('Error fetching interests:', error);
+        setInterestsError('Failed to load interests');
+      } finally {
+        setLoadingInterests(false);
+      }
+    };
+
+    fetchInterests();
+  }, []);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: name === 'interestId' ? parseInt(value) || 0 : value,
     });
-  };
-
-  const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
   };
 
   const handleSubmit = async (e) => {
@@ -35,23 +58,34 @@ const CreateRestaurant = () => {
     setLoading(true);
 
     try {
-      const formDataToSend = new FormData();
-      Object.keys(formData).forEach(key => {
-        formDataToSend.append(key, formData[key]);
-      });
-      if (image) {
-        formDataToSend.append('image', image);
-      }
+      const payload = {
+        ...formData,
+        interestId: parseInt(formData.interestId) || 0,
+        ratting: parseFloat(formData.ratting) || 0,
+      };
 
-      await api.post('/restaurants', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      await api.post('/place', payload);
 
       navigate('/restaurants');
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create restaurant');
+      const status = error.response?.status;
+      
+      if (status === 500) {
+        setError('Something went wrong');
+      } else if (status === 400) {
+        // Show the error message from the response
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            'Invalid request. Please check your input.';
+        setError(errorMessage);
+      } else {
+        // Handle other error statuses
+        setError(error.response?.data?.message || 
+                error.response?.data?.error || 
+                error.message || 
+                'Failed to create restaurant');
+      }
     } finally {
       setLoading(false);
     }
@@ -74,6 +108,12 @@ const CreateRestaurant = () => {
             </div>
           )}
 
+          {interestsError && (
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-6">
+              {interestsError}
+            </div>
+          )}
+
           <div className="bg-white shadow rounded-lg">
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -88,22 +128,22 @@ const CreateRestaurant = () => {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-                    Location *
+                  <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+                    Address *
                   </label>
                   <input
                     type="text"
-                    name="location"
-                    id="location"
+                    name="address"
+                    id="address"
                     required
-                    value={formData.location}
+                    value={formData.address}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
@@ -119,102 +159,194 @@ const CreateRestaurant = () => {
                   required
                   value={formData.description}
                   onChange={handleChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="cuisine" className="block text-sm font-medium text-gray-700">
-                    Cuisine Type
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                    Email *
                   </label>
                   <input
-                    type="text"
-                    name="cuisine"
-                    id="cuisine"
-                    value={formData.cuisine}
+                    type="email"
+                    name="email"
+                    id="email"
+                    required
+                    value={formData.email}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="priceRange" className="block text-sm font-medium text-gray-700">
-                    Price Range
+                  <label htmlFor="mobileNumber" className="block text-sm font-medium text-gray-700">
+                    Mobile Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="mobileNumber"
+                    id="mobileNumber"
+                    required
+                    value={formData.mobileNumber}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="latitude" className="block text-sm font-medium text-gray-700">
+                    Latitude *
+                  </label>
+                  <input
+                    type="text"
+                    name="latitude"
+                    id="latitude"
+                    required
+                    value={formData.latitude}
+                    onChange={handleChange}
+                    placeholder="e.g., 28.7041"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="longitude" className="block text-sm font-medium text-gray-700">
+                    Longitude *
+                  </label>
+                  <input
+                    type="text"
+                    name="longitude"
+                    id="longitude"
+                    required
+                    value={formData.longitude}
+                    onChange={handleChange}
+                    placeholder="e.g., 77.1025"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="openingTime" className="block text-sm font-medium text-gray-700">
+                    Opening Time *
+                  </label>
+                  <input
+                    type="time"
+                    name="openingTime"
+                    id="openingTime"
+                    required
+                    value={formData.openingTime}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="closingTime" className="block text-sm font-medium text-gray-700">
+                    Closing Time *
+                  </label>
+                  <input
+                    type="time"
+                    name="closingTime"
+                    id="closingTime"
+                    required
+                    value={formData.closingTime}
+                    onChange={handleChange}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="forTwo" className="block text-sm font-medium text-gray-700">
+                    Price for Two
+                  </label>
+                  <input
+                    type="text"
+                    name="forTwo"
+                    id="forTwo"
+                    value={formData.forTwo}
+                    onChange={handleChange}
+                    placeholder="e.g., ₹500"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="interestId" className="block text-sm font-medium text-gray-700">
+                    Interest
                   </label>
                   <select
-                    name="priceRange"
-                    id="priceRange"
-                    value={formData.priceRange}
+                    name="interestId"
+                    id="interestId"
+                    value={formData.interestId}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    disabled={loadingInterests}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
-                    <option value="$">$ (Budget)</option>
-                    <option value="$$">$$ (Moderate)</option>
-                    <option value="$$$">$$$ (Expensive)</option>
-                    <option value="$$$$">$$$$ (Very Expensive)</option>
+                    <option value="0">Select an interest</option>
+                    {interests.map((interest) => (
+                      <option key={interest.interestId} value={interest.interestId}>
+                        {interest.interestName}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                    Phone Number
+                  <label htmlFor="offerPercentage" className="block text-sm font-medium text-gray-700">
+                    Offer Percentage
                   </label>
                   <input
-                    type="tel"
-                    name="phone"
-                    id="phone"
-                    value={formData.phone}
+                    type="text"
+                    name="offerPercentage"
+                    id="offerPercentage"
+                    value={formData.offerPercentage}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="e.g., 10%"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="website" className="block text-sm font-medium text-gray-700">
-                    Website
+                  <label htmlFor="couponPercentage" className="block text-sm font-medium text-gray-700">
+                    Coupon Percentage
                   </label>
                   <input
-                    type="url"
-                    name="website"
-                    id="website"
-                    value={formData.website}
+                    type="text"
+                    name="couponPercentage"
+                    id="couponPercentage"
+                    value={formData.couponPercentage}
                     onChange={handleChange}
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="e.g., 15%"
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="image" className="block text-sm font-medium text-gray-700">
-                  Restaurant Image
+                <label htmlFor="ratting" className="block text-sm font-medium text-gray-700">
+                  Rating
                 </label>
                 <input
-                  type="file"
-                  name="image"
-                  id="image"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="status" className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <select
-                  name="status"
-                  id="status"
-                  value={formData.status}
+                  type="number"
+                  name="ratting"
+                  id="ratting"
+                  value={formData.ratting}
                   onChange={handleChange}
-                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  placeholder="0.0"
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                />
               </div>
 
               <div className="flex justify-end space-x-3">

@@ -45,6 +45,12 @@ const Navbar = () => {
                 </Link>
                 <div className="flex items-center space-x-4">
                   <span className="text-gray-700 text-sm">Welcome, {user?.name}</span>
+                  <Link
+                    to="/update-password"
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Update Password
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
@@ -114,6 +120,13 @@ const Navbar = () => {
                   <div className="px-3 py-2">
                     <span className="text-gray-700 text-sm">Welcome, {user?.name}</span>
                   </div>
+                  <Link
+                    to="/update-password"
+                    className="text-gray-700 hover:text-blue-600 block px-3 py-2 rounded-md text-base font-medium"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Update Password
+                  </Link>
                   <button
                     onClick={() => {
                       handleLogout();
